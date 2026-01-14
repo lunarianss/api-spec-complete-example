@@ -1,0 +1,1354 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Complete OpenAPI 3.0 Example API",
+    "description": "This API specification showcases all available fields defined in the OpenAPI 3.0.4 specification. It serves as a reference implementation for API designers and developers.\n\n## Features\n- Complete field coverage\n- Multiple authentication schemes\n- Comprehensive data models\n- Example callbacks",
+    "termsOfService": "https://example.com/terms/",
+    "contact": {
+      "name": "API Support Team",
+      "url": "https://www.example.com/support",
+      "email": "[email protected]"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.1",
+    "x-api-id": "complete-example-api",
+    "x-audience": "external"
+  },
+  "servers": [
+    {
+      "url": "https://{environment}.example.com:{port}/{basePath}",
+      "description": "Main production server with variable configuration",
+      "variables": {
+        "environment": {
+          "default": "api",
+          "description": "Server environment",
+          "enum": ["api", "api-staging", "api-dev"]
+        },
+        "port": {
+          "default": "443",
+          "description": "Server port number",
+          "enum": ["443", "8443"]
+        },
+        "basePath": {
+          "default": "v1",
+          "description": "API version path segment"
+        }
+      }
+    },
+    {
+      "url": "https://backup.example.com/v1",
+      "description": "Backup server for failover"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "summary": "User management endpoints",
+      "description": "Operations for managing user accounts and profiles",
+      "servers": [
+        {
+          "url": "https://users-api.example.com",
+          "description": "Dedicated users microservice"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "description": "Unique request identifier for tracing",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "example": "123e4567-e89b-12d3-a456-426614174000"
+        }
+      ],
+      "get": {
+        "tags": ["Users", "Admin"],
+        "summary": "List all users",
+        "description": "Retrieve a paginated list of all users in the system",
+        "operationId": "listUsers",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "example": 50
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of items to skip",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field and direction",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["name:asc", "name:desc", "created:asc", "created:desc"]
+            },
+            "style": "form",
+            "explode": false
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Complex filter object",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["active", "inactive", "pending"]
+                },
+                "role": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "description": "Filter by tags",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user list",
+            "headers": {
+              "X-Rate-Limit-Limit": {
+                "description": "The number of allowed requests in the current period",
+                "required": false,
+                "schema": {
+                  "type": "integer"
+                },
+                "example": 1000
+              },
+              "X-Rate-Limit-Remaining": {
+                "description": "The number of remaining requests in the current period",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Rate-Limit-Reset": {
+                "description": "The timestamp when the rate limit resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              },
+              "ETag": {
+                "description": "Entity tag for cache validation",
+                "required": true,
+                "content": {
+                  "text/plain": {
+                    "schema": {
+                      "type": "string",
+                      "pattern": "^\""
+                    }
+                  }
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserList"
+                },
+                "examples": {
+                  "userListExample": {
+                    "summary": "Example user list response",
+                    "value": {
+                      "items": [
+                        {
+                          "id": 1,
+                          "name": "John Doe",
+                          "email": "[email protected]",
+                          "status": "active"
+                        }
+                      ],
+                      "total": 1,
+                      "limit": 20,
+                      "offset": 0
+                    }
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserList"
+                }
+              }
+            },
+            "links": {
+              "GetUserByUserId": {
+                "operationId": "getUserById",
+                "parameters": {
+                  "userId": "$response.body#/items/0/id"
+                },
+                "description": "Link to get the first user from the list"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "default": {
+            "$ref": "#/components/responses/GeneralError"
+          }
+        },
+        "security": [
+          {
+            "OAuth2": ["read:users", "admin"]
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "externalDocs": {
+          "description": "Find more information about user listing",
+          "url": "https://docs.example.com/users/list"
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a new user",
+        "description": "Create a new user account with the provided information",
+        "operationId": "createUser",
+        "requestBody": {
+          "description": "User object that needs to be created",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserInput"
+              },
+              "examples": {
+                "newUser": {
+                  "summary": "Example new user",
+                  "value": {
+                    "name": "Jane Smith",
+                    "email": "[email protected]",
+                    "password": "SecureP@ssw0rd"
+                  }
+                }
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/UserInput"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/UserInput"
+              },
+              "encoding": {
+                "email": {
+                  "contentType": "text/plain"
+                },
+                "profileImage": {
+                  "contentType": "image/png, image/jpeg",
+                  "headers": {
+                    "X-Image-Source": {
+                      "description": "Source of the image",
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully created",
+            "headers": {
+              "Location": {
+                "description": "URL of the created user resource",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "links": {
+              "GetUser": {
+                "operationId": "getUserById",
+                "parameters": {
+                  "userId": "$response.body#/id"
+                },
+                "description": "Link to retrieve the created user"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "description": "User already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "userCreated": {
+            "{$request.body#/callbackUrl}": {
+              "post": {
+                "summary": "User creation notification",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/UserEvent"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback successfully processed"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": ["write:users"]
+          }
+        ]
+      }
+    },
+    "/users/{userId}": {
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "description": "Unique identifier of the user",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "style": "simple",
+          "example": 12345
+        }
+      ],
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user by ID",
+        "description": "Retrieve detailed information about a specific user",
+        "operationId": "getUserById",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User found and returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "OAuth2": ["read:users"]
+          }
+        ]
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user",
+        "description": "Update an existing user's information",
+        "operationId": "updateUser",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UserInput"
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete user",
+        "description": "Remove a user from the system",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag for optimistic concurrency control",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User successfully deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "description": "Precondition failed - ETag mismatch"
+          }
+        },
+        "security": [
+          {
+            "OAuth2": ["delete:users", "admin"]
+          }
+        ]
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Partially update user",
+        "description": "Update specific fields of a user",
+        "operationId": "patchUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully patched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "tags": ["Users"],
+        "summary": "Check if user exists",
+        "description": "Check if a user exists without retrieving the full data",
+        "operationId": "headUser",
+        "responses": {
+          "200": {
+            "description": "User exists"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      },
+      "options": {
+        "tags": ["Users"],
+        "summary": "Get supported operations",
+        "description": "Returns the supported HTTP methods for this resource",
+        "operationId": "optionsUser",
+        "responses": {
+          "200": {
+            "description": "Supported operations",
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "GET, PUT, DELETE, PATCH, HEAD, OPTIONS"
+              }
+            }
+          }
+        }
+      },
+      "trace": {
+        "tags": ["Users"],
+        "summary": "Trace user endpoint",
+        "description": "Performs a message loop-back test along the path to the target resource",
+        "operationId": "traceUser",
+        "responses": {
+          "200": {
+            "description": "Trace response"
+          }
+        }
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "tags": ["Files"],
+        "summary": "Upload files",
+        "description": "Upload one or more files with metadata",
+        "operationId": "uploadFiles",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "author": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": ["file"]
+              },
+              "encoding": {
+                "file": {
+                  "contentType": "image/png, image/jpeg, application/pdf",
+                  "headers": {
+                    "X-File-Size": {
+                      "description": "Size of the file in bytes",
+                      "schema": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "metadata": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Files uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "fileIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "description": "User account information",
+        "required": ["id", "name", "email"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unique identifier",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "description": "User's full name",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address"
+          },
+          "status": {
+            "type": "string",
+            "description": "Account status",
+            "enum": ["active", "inactive", "pending", "suspended"],
+            "default": "pending"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 18,
+            "maximum": 120,
+            "description": "User's age",
+            "nullable": true
+          },
+          "balance": {
+            "type": "number",
+            "format": "double",
+            "description": "Account balance",
+            "readOnly": true
+          },
+          "isVerified": {
+            "type": "boolean",
+            "description": "Whether the email is verified",
+            "default": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp",
+            "readOnly": true
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "User's date of birth",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "description": "User tags",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "avatar": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded avatar image"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/UserPreferences"
+          }
+        },
+        "discriminator": {
+          "propertyName": "role",
+          "mapping": {
+            "admin": "#/components/schemas/AdminUser",
+            "user": "#/components/schemas/RegularUser"
+          }
+        },
+        "xml": {
+          "name": "User",
+          "namespace": "https://example.com/schema/user",
+          "prefix": "usr"
+        },
+        "externalDocs": {
+          "description": "User schema documentation",
+          "url": "https://docs.example.com/schemas/user"
+        },
+        "example": {
+          "id": 1,
+          "name": "John Doe",
+          "email": "[email protected]",
+          "status": "active",
+          "role": "user"
+        }
+      },
+      "AdminUser": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "adminLevel": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["adminLevel"]
+          }
+        ]
+      },
+      "RegularUser": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "subscriptionTier": {
+                "type": "string",
+                "enum": ["free", "premium", "enterprise"]
+              }
+            }
+          }
+        ]
+      },
+      "UserInput": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 8,
+            "pattern": "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+            "writeOnly": true,
+            "description": "Must contain uppercase, lowercase, digit, and special character"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 18,
+            "nullable": true
+          },
+          "callbackUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for callback notifications"
+          }
+        }
+      },
+      "UserPreferences": {
+        "type": "object",
+        "properties": {
+          "theme": {
+            "type": "string",
+            "enum": ["light", "dark", "auto"],
+            "default": "auto"
+          },
+          "language": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+            "default": "en"
+          },
+          "notifications": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "UserList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of users"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        }
+      },
+      "UserEvent": {
+        "type": "object",
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "enum": ["created", "updated", "deleted"]
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "issue": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Request trace identifier"
+          }
+        }
+      },
+      "Pet": {
+        "type": "object",
+        "discriminator": {
+          "propertyName": "petType"
+        },
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "petType": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "petType"]
+      },
+      "Cat": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Pet"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "huntingSkill": {
+                "type": "string",
+                "enum": ["clueless", "lazy", "adventurous", "aggressive"]
+              }
+            }
+          }
+        ]
+      },
+      "Dog": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Pet"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "packSize": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "The specified resource was not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "code": 404,
+              "message": "Resource not found"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication is required",
+        "headers": {
+          "WWW-Authenticate": {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Authentication scheme"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "X-RateLimit-Limit": {
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "X-RateLimit-Remaining": {
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "X-RateLimit-Reset": {
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Seconds to wait before retrying"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "GeneralError": {
+        "description": "An unexpected error occurred",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "limitParam": {
+        "name": "limit",
+        "in": "query",
+        "description": "Maximum number of items to return",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "offsetParam": {
+        "name": "offset",
+        "in": "query",
+        "description": "Number of items to skip",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "default": 0
+        }
+      },
+      "userIdParam": {
+        "name": "userId",
+        "in": "path",
+        "description": "User identifier",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "examples": {
+          "example1": {
+            "summary": "Example user ID",
+            "value": 12345
+          }
+        }
+      },
+      "apiVersionHeader": {
+        "name": "X-API-Version",
+        "in": "header",
+        "description": "API version",
+        "required": false,
+        "deprecated": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "sessionCookie": {
+        "name": "sessionId",
+        "in": "cookie",
+        "description": "Session identifier",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "examples": {
+      "UserExample": {
+        "summary": "Example user",
+        "description": "A typical user object",
+        "value": {
+          "id": 1,
+          "name": "John Doe",
+          "email": "[email protected]",
+          "status": "active"
+        }
+      },
+      "AdminUserExample": {
+        "summary": "Example admin user",
+        "value": {
+          "id": 2,
+          "name": "Admin User",
+          "email": "[email protected]",
+          "status": "active",
+          "role": "admin",
+          "adminLevel": 5
+        }
+      },
+      "ErrorExample": {
+        "summary": "Example error response",
+        "externalValue": "https://example.com/examples/error.json"
+      }
+    },
+    "requestBodies": {
+      "UserInput": {
+        "description": "User input data",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserInput"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/UserInput"
+            }
+          }
+        }
+      }
+    },
+    "headers": {
+      "X-Rate-Limit": {
+        "description": "Rate limit information",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "X-Request-ID": {
+        "description": "Unique request identifier",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "name": "X-API-Key",
+        "in": "header",
+        "description": "API key for authentication"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT bearer token authentication"
+      },
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Basic HTTP authentication"
+      },
+      "OAuth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authentication",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "scopes": {
+              "read:users": "Read user information",
+              "write:users": "Modify user information",
+              "delete:users": "Delete users",
+              "admin": "Administrative access"
+            }
+          },
+          "password": {
+            "tokenUrl": "https://example.com/oauth/token",
+            "refreshUrl": "https://example.com/oauth/refresh",
+            "scopes": {
+              "read:users": "Read user information",
+              "write:users": "Modify user information"
+            }
+          },
+          "clientCredentials": {
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+              "api:access": "API access"
+            }
+          },
+          "authorizationCode": {
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "tokenUrl": "https://example.com/oauth/token",
+            "refreshUrl": "https://example.com/oauth/refresh",
+            "scopes": {
+              "read:users": "Read user information",
+              "write:users": "Modify user information",
+              "delete:users": "Delete users",
+              "admin": "Administrative access"
+            }
+          }
+        }
+      },
+      "OpenID": {
+        "type": "openIdConnect",
+        "openIdConnectUrl": "https://example.com/.well-known/openid-configuration",
+        "description": "OpenID Connect authentication"
+      }
+    },
+    "links": {
+      "GetUserByUserId": {
+        "operationId": "getUserById",
+        "parameters": {
+          "userId": "$response.body#/id"
+        },
+        "description": "The `id` value from the response can be used as the `userId` parameter in `GET /users/{userId}`"
+      },
+      "GetUserByRef": {
+        "operationRef": "#/paths/~1users~1{userId}/get",
+        "parameters": {
+          "userId": "$response.body#/id"
+        },
+        "server": {
+          "url": "https://users-api.example.com",
+          "description": "Users API server"
+        }
+      }
+    },
+    "callbacks": {
+      "userEvent": {
+        "{$request.body#/callbackUrl}": {
+          "post": {
+            "requestBody": {
+              "required": true,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserEvent"
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Callback processed successfully"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "OAuth2": ["read:users"]
+    },
+    {
+      "ApiKeyAuth": []
+    },
+    {}
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "User management operations",
+      "externalDocs": {
+        "description": "Find out more about users",
+        "url": "https://docs.example.com/users"
+      }
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative operations",
+      "externalDocs": {
+        "description": "Admin documentation",
+        "url": "https://docs.example.com/admin"
+      }
+    },
+    {
+      "name": "Files",
+      "description": "File upload and management"
+    }
+  ],
+  "externalDocs": {
+    "description": "Complete API documentation",
+    "url": "https://docs.example.com"
+  }
+}
