@@ -1,0 +1,1089 @@
+openapi: 3.1.1
+info:
+  title: Complete Pet Store API
+  summary: A comprehensive pet store management system
+  description: |
+    This is a complete example of an OpenAPI 3.1 specification demonstrating all major features.
+    It includes full inline schemas without any component references or external URLs.
+  termsOfService: urn:tos
+  contact:
+    name: API Support Team
+    email: support@petstore.local
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
+  version: 1.0.0
+
+jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+
+servers:
+  - url: /api/v1
+    description: Production server
+    variables:
+      port:
+        default: '8443'
+        enum:
+          - '8443'
+          - '443'
+        description: The port number for the API server
+      basePath:
+        default: v1
+        description: API version path
+
+tags:
+  - name: pets
+    description: Pet management operations
+    externalDocs:
+      description: Find more information about pets
+      url: urn:pets:documentation
+  - name: users
+    description: User management operations
+
+paths:
+  /pets:
+    summary: Pet collection endpoint
+    description: Operations on the pet collection
+    get:
+      tags:
+        - pets
+      summary: List all pets
+      description: Returns a list of all pets in the store with pagination support
+      operationId: listPets
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+          style: form
+          explode: true
+        - name: offset
+          in: query
+          description: Number of items to skip
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          description: Filter by pet status
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - available
+                - pending
+                - sold
+          style: form
+          explode: true
+        - name: X-Request-ID
+          in: header
+          description: Unique request identifier
+          required: false
+          schema:
+            type: string
+            format: uuid
+          style: simple
+      responses:
+        '200':
+          description: Successful response with pet list
+          headers:
+            X-Rate-Limit-Limit:
+              description: The number of allowed requests in the current period
+              required: false
+              schema:
+                type: integer
+                format: int32
+              style: simple
+            X-Rate-Limit-Remaining:
+              description: The number of remaining requests in the current period
+              required: false
+              schema:
+                type: integer
+                format: int32
+            X-Rate-Limit-Reset:
+              description: The number of seconds left in the current period
+              required: false
+              schema:
+                type: integer
+                format: int32
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - name
+                        - status
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                          description: Unique identifier for the pet
+                          examples:
+                            - 12345
+                        name:
+                          type: string
+                          description: Name of the pet
+                          minLength: 1
+                          maxLength: 100
+                          examples:
+                            - Fluffy
+                        status:
+                          type: string
+                          description: Current status of the pet
+                          enum:
+                            - available
+                            - pending
+                            - sold
+                          default: available
+                        category:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              format: int64
+                            name:
+                              type: string
+                              examples:
+                                - Dogs
+                        tags:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                format: int64
+                              name:
+                                type: string
+                        photoUrls:
+                          type: array
+                          items:
+                            type: string
+                            format: uri
+                  pagination:
+                    type: object
+                    required:
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      total:
+                        type: integer
+                        format: int32
+                        description: Total number of items
+                      limit:
+                        type: integer
+                        format: int32
+                        description: Number of items per page
+                      offset:
+                        type: integer
+                        format: int32
+                        description: Number of items skipped
+              examples:
+                petList:
+                  summary: Example pet list response
+                  description: A typical response with two pets
+                  value:
+                    data:
+                      - id: 1
+                        name: Fluffy
+                        status: available
+                        category:
+                          id: 1
+                          name: Cats
+                        tags:
+                          - id: 1
+                            name: friendly
+                        photoUrls:
+                          - urn:photo:1
+                      - id: 2
+                        name: Buddy
+                        status: pending
+                        category:
+                          id: 2
+                          name: Dogs
+                        tags:
+                          - id: 2
+                            name: playful
+                        photoUrls:
+                          - urn:photo:2
+                    pagination:
+                      total: 100
+                      limit: 20
+                      offset: 0
+            application/xml:
+              schema:
+                type: object
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                        name:
+                          type: string
+                xml:
+                  name: PetList
+                  wrapped: true
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        examples:
+                          - INVALID_PARAMETER
+                      message:
+                        type: string
+                        examples:
+                          - The limit parameter must be between 1 and 100
+                      details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                            issue:
+                              type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        examples:
+                          - UNAUTHORIZED
+                      message:
+                        type: string
+                        examples:
+                          - Authentication credentials are required
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+      security:
+        - apiKey: []
+        - bearerAuth: []
+    post:
+      tags:
+        - pets
+      summary: Create a new pet
+      description: Add a new pet to the store inventory
+      operationId: createPet
+      requestBody:
+        description: Pet object that needs to be added to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - status
+              properties:
+                name:
+                  type: string
+                  description: Name of the pet
+                  minLength: 1
+                  maxLength: 100
+                status:
+                  type: string
+                  description: Pet status in the store
+                  enum:
+                    - available
+                    - pending
+                    - sold
+                  default: available
+                category:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int64
+                    name:
+                      type: string
+                tags:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        format: int64
+                      name:
+                        type: string
+                photoUrls:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+            examples:
+              newPet:
+                summary: Example new pet
+                value:
+                  name: Max
+                  status: available
+                  category:
+                    id: 2
+                    name: Dogs
+                  tags:
+                    - id: 1
+                      name: friendly
+                  photoUrls:
+                    - urn:photo:new
+          application/xml:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                status:
+                  type: string
+              xml:
+                name: Pet
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Pet name
+                status:
+                  type: string
+                  description: Pet status
+                  enum:
+                    - available
+                    - pending
+                    - sold
+                photo:
+                  type: string
+                  format: binary
+                  description: Pet photo file
+            encoding:
+              photo:
+                contentType: image/png, image/jpeg
+                headers:
+                  X-Photo-Metadata:
+                    description: Additional photo metadata
+                    schema:
+                      type: string
+      responses:
+        '201':
+          description: Pet created successfully
+          headers:
+            Location:
+              description: URI of the created pet
+              required: true
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                  - status
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                  name:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - available
+                      - pending
+                      - sold
+                  category:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        format: int64
+                      name:
+                        type: string
+                  tags:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                        name:
+                          type: string
+                  photoUrls:
+                    type: array
+                    items:
+                      type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+          links:
+            GetPetById:
+              description: Get the created pet by ID
+              operationId: getPetById
+              parameters:
+                petId: $response.body#/id
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                      validationErrors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                            message:
+                              type: string
+      security:
+        - bearerAuth: []
+      callbacks:
+        petStatusChanged:
+          '{$request.body#/callbackUrl}':
+            post:
+              summary: Pet status change notification
+              description: Callback when pet status changes
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      required:
+                        - petId
+                        - oldStatus
+                        - newStatus
+                        - timestamp
+                      properties:
+                        petId:
+                          type: integer
+                          format: int64
+                        oldStatus:
+                          type: string
+                        newStatus:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+              responses:
+                '200':
+                  description: Callback received successfully
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          acknowledged:
+                            type: boolean
+
+  /pets/{petId}:
+    parameters:
+      - name: petId
+        in: path
+        description: ID of pet to operate on
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+        style: simple
+    get:
+      tags:
+        - pets
+      summary: Get pet by ID
+      description: Returns a single pet by its ID
+      operationId: getPetById
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                  - status
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                  name:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - available
+                      - pending
+                      - sold
+                  category:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        format: int64
+                      name:
+                        type: string
+                  tags:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                        name:
+                          type: string
+                  photoUrls:
+                    type: array
+                    items:
+                      type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+        '404':
+          description: Pet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        examples:
+                          - NOT_FOUND
+                      message:
+                        type: string
+                        examples:
+                          - Pet with the specified ID was not found
+      security:
+        - apiKey: []
+        - bearerAuth: []
+    put:
+      tags:
+        - pets
+      summary: Update an existing pet
+      description: Update pet information by ID
+      operationId: updatePet
+      requestBody:
+        description: Updated pet object
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                status:
+                  type: string
+                  enum:
+                    - available
+                    - pending
+                    - sold
+                category:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int64
+                    name:
+                      type: string
+                tags:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        format: int64
+                      name:
+                        type: string
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Updated name of the pet
+                status:
+                  type: string
+                  description: Updated status of the pet
+                  enum:
+                    - available
+                    - pending
+                    - sold
+      responses:
+        '200':
+          description: Pet updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                  - status
+                  - updatedAt
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                  name:
+                    type: string
+                  status:
+                    type: string
+                  updatedAt:
+                    type: string
+                    format: date-time
+        '404':
+          description: Pet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - pets
+      summary: Delete a pet
+      description: Deletes a pet from the store
+      operationId: deletePet
+      parameters:
+        - name: X-Confirm-Delete
+          in: header
+          description: Confirmation header for delete operation
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '204':
+          description: Pet deleted successfully
+        '404':
+          description: Pet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+      security:
+        - bearerAuth: []
+
+  /users:
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      description: Register a new user in the system
+      operationId: createUser
+      requestBody:
+        description: User registration data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: '^[a-zA-Z0-9_-]+$'
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  writeOnly: true
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+                  pattern: '^\+?[1-9]\d{1,14}$'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - username
+                  - email
+                  - createdAt
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    readOnly: true
+                  username:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  phone:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                    readOnly: true
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        examples:
+                          - CONFLICT
+                      message:
+                        type: string
+                        examples:
+                          - A user with this username or email already exists
+
+  /users/login:
+    post:
+      tags:
+        - users
+      summary: User login
+      description: Authenticate a user and receive an access token
+      operationId: loginUser
+      requestBody:
+        description: Login credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                  writeOnly: true
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - accessToken
+                  - tokenType
+                  - expiresIn
+                properties:
+                  accessToken:
+                    type: string
+                    description: JWT access token
+                  tokenType:
+                    type: string
+                    enum:
+                      - Bearer
+                    default: Bearer
+                  expiresIn:
+                    type: integer
+                    format: int32
+                    description: Token expiration time in seconds
+                  refreshToken:
+                    type: string
+                    description: Refresh token for obtaining new access tokens
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        examples:
+                          - INVALID_CREDENTIALS
+                      message:
+                        type: string
+                        examples:
+                          - The username or password is incorrect
+      security: []
+
+webhooks:
+  newPetAlert:
+    post:
+      summary: New pet added notification
+      description: Webhook triggered when a new pet is added to the store
+      operationId: newPetWebhook
+      requestBody:
+        description: New pet data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - eventType
+                - timestamp
+                - data
+              properties:
+                eventType:
+                  type: string
+                  enum:
+                    - pet.created
+                timestamp:
+                  type: string
+                  format: date-time
+                data:
+                  type: object
+                  required:
+                    - id
+                    - name
+                    - status
+                  properties:
+                    id:
+                      type: integer
+                      format: int64
+                    name:
+                      type: string
+                    status:
+                      type: string
+                    category:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                        name:
+                          type: string
+      responses:
+        '200':
+          description: Webhook received successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+
+security:
+  - apiKey: []
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: X-API-Key
+      in: header
+      description: API key for authentication
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT bearer token authentication
+    oauth2:
+      type: oauth2
+      description: OAuth2 authentication
+      flows:
+        authorizationCode:
+          authorizationUrl: urn:oauth:authorize
+          tokenUrl: urn:oauth:token
+          refreshUrl: urn:oauth:refresh
+          scopes:
+            read:pets: Read pet information
+            write:pets: Modify pet information
+            read:users: Read user information
+            write:users: Modify user information
+        implicit:
+          authorizationUrl: urn:oauth:authorize
+          scopes:
+            read:pets: Read pet information
+    mutualTLS:
+      type: mutualTLS
+      description: Mutual TLS authentication using client certificates
+    openIdConnect:
+      type: openIdConnect
+      openIdConnectUrl: urn:openid:configuration
+      description: OpenID Connect authentication
+
+externalDocs:
+  description: Complete API documentation and guides
+  url: urn:api:documentation
