@@ -76,6 +76,7 @@
         "description": "Retrieve a paginated list of all users in the system. Requires admin privileges.\n\nSupports filtering, sorting, and pagination.",
         "description3": "Retrieve a paginated list of all users in the system. Requires admin privileges.\n\nSupports filtering, sorting, and pagination.",
         "description2": "Retrieve a paginated list of all users in the system. Requires admin privileges.\n\nSupports filtering, sorting, and pagination.",
+        "description5": "Retrieve a paginated list of all users in the system. Requires admin privileges.\n\nSupports filtering, sorting, and pagination.",
         "operationId": "listUsers",
         "parameters": [
           {
