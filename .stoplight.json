@@ -4,7 +4,7 @@
       "rootDir": "reference"
     },
     "markdown": {
-      "rootDir": "docs",
+      "rootDir": "docs3",
       "include": ["README.md", "docs/**"]
     },
     "image": {
