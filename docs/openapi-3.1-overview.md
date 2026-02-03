@@ -1,4 +1,4 @@
-# OpenAPI 3.1 完整示例文档
+# OpenAPI 3.12 完整示例文档
 
 本文档说明了 `openapi-3.1-complete-example.json` 文件的内容结构和涵盖的字段。
 
