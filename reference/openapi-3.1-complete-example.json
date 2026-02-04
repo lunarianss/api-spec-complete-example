@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "Complete OpenAPI 3.1 Example API",
+    "title": "Complete OpenAPI 3.0 Example API",
     "summary": "A comprehensive example demonstrating all OpenAPI 3.1 specification fields",
     "description": "This API specification showcases all available fields defined in the OpenAPI 3.1.1 specification. It serves as a reference implementation for API designers and developers.\n\n## Features\n- Complete field coverage\n- Multiple authentication schemes\n- Comprehensive data models\n- Example webhooks and callbacks",
     "termsOfService": "https://example.com/terms/",
