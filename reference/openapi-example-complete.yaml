@@ -1,6 +1,6 @@
 openapi: 3.1.1
 info:
-  title: Complete Pet Store API
+  title: Complete Pet Store API2
   summary: A comprehensive pet store management system
   description: |
     This is a complete example of an OpenAPI 3.1 specification demonstrating all major features.
