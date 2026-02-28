@@ -760,7 +760,7 @@ paths:
       tags:
         - pets
       summary: Delete a pet
-      description: Deletes a pet from the store
+      description: Deletes a pet from the store3
       operationId: deletePet
       parameters:
         - name: X-Confirm-Delete
