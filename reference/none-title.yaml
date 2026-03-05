@@ -6,7 +6,7 @@ servers:
 paths:
   /users/{userId}:
     get:
-      summary: Get User Info by User ID
+      summary: Get User Info by User ID4
       description: Retrieve the information of the user with the matching user ID.
       operationId: get-users-userId
       parameters:
